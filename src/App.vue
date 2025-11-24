@@ -1,13 +1,10 @@
 <script setup>
 import { onMounted } from 'vue'
 import Header from './components/Header.vue'
-import Product from './components/Product.vue'
-import OrderForm from './components/OrderForm.vue'
-import CreateProduct from './components/CreateProduct.vue'
+
 import { useProducts } from './composables/useProducts'
 
-
-const { products, loading, error, fetchProducts } = useProducts()
+const { fetchProducts } = useProducts()
 
 onMounted(() => {
   fetchProducts()
@@ -16,28 +13,18 @@ onMounted(() => {
 </script>
 
 <template>
+	<nav>
+		<RouterLink to="/">Главная. Список товаров</RouterLink>
+		<RouterLink to="/create">Создание товара</RouterLink>
+		<RouterLink to="/order">Создание товара</RouterLink>
+	</nav>
 	<Header/>
-	<CreateProduct/>
-	<OrderForm/>
-	<h2>Список товаров</h2>
-  <div v-if="loading">Загрузка товаров...</div>
-  <div v-else-if="error" class="error">Ошибка: {{ error }}</div>
-  <ul v-else>
-    <Product 
-      v-for="product in products"
-      :key="product.id"
-      :title="product.title"
-      :id="product.id"
-      :price="product.price"
-      :description="product.description"
-      :category="product.category"
-      :image="product.image"
-      :rating="product.rating"
-    />
-  </ul>
+	<main>
+    <RouterView />
+  </main>
 </template>
 
-<style scoped>
+<style>
 ul {
 	padding-left: 0;
 }

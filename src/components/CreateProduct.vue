@@ -1,8 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-
 import { Field, Form, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const createProductName = ref('')
 const createProductPrice = ref(0)
@@ -34,8 +37,8 @@ async function onCreate(values) {
     showSuccessMessage.value = true;
     
     setTimeout(() => {
-      showSuccessMessage.value = false;
-    }, 5000);
+      router.push('/'); 
+    }, 2000);
 
   } catch (error) {
     console.error('Ошибка:', error);

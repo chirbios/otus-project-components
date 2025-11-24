@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps(['title', 'id', 'price', 'description', 'category', 'image', 'rating'])
-console.log(props.products)
+
 </script>
 
 <template>

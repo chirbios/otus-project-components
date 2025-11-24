@@ -1,8 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { Field, Form, ErrorMessage } from 'vee-validate'
+import { useRouter } from 'vue-router'
 import * as yup from 'yup'
 import axios from 'axios'
+
+const router = useRouter()
 
 const orderFormProduct = ref('')
 const orderFormName = ref('')
@@ -37,8 +40,8 @@ async function onSubmit(values) {
     showSuccessMessage.value = true;
     
     setTimeout(() => {
-      showSuccessMessage.value = false;
-    }, 5000);
+      router.push('/'); 
+    }, 2000);
 
   } catch (error) {
     console.error('Ошибка:', error);
