@@ -1,15 +1,14 @@
 <script setup>
-const props = defineProps(['title', 'price', 'images'])
+const props = defineProps(['title', 'id', 'price', 'description', 'category', 'image', 'rating'])
+console.log(props.products)
 </script>
 
 <template>
 	<div class="element">
-		<h2>{{ props.title }}</h2>
+		<h3>{{ props.title }}</h3>
+		<span>{{ props.description }}</span>
 		<h3>{{ props.price }}$</h3>
 		<ul>
-			<li v-for="img in props.images">
-				<img :src="img" :alt="props.title">
-			</li>
 		</ul>
 	</div>
 </template>
