@@ -14,8 +14,45 @@ const orderFormAddress = ref('')
 const orderFormCountry = ref('')
 const orderFormIsStudent = ref('no')
 const orderFormHobby = ref([])
+const orderDateOfBirth = ref('')
+const cardNumber = ref('')
+const cardExpiry = ref('')
+const cardCVV = ref('')
+const agreeToTerms = ref(false)
 const showSuccessMessage = ref(false)
 const isLoading = ref(false)
+
+const validateAge = (date) => {
+  if (!date) return false;
+  
+  const birthDate = new Date(date);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age >= 18;
+}
+
+const validateCardExpiry = (value) => {
+  if (!value) return false;
+  
+  const regex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+  if (!regex.test(value)) return false;
+  
+  const [month, year] = value.split('/');
+  const expiryDate = new Date(2000 + parseInt(year), parseInt(month) - 1);
+  const currentDate = new Date();
+  
+  expiryDate.setMonth(expiryDate.getMonth() + 1);
+  expiryDate.setDate(0);
+  
+  return expiryDate > currentDate;
+};
 
 const schema = yup.object({
   orderFormProduct: yup.string().required().min(3),
@@ -23,6 +60,38 @@ const schema = yup.object({
   orderFormEmail: yup.string().email().required(),
   orderFormAddress: yup.string().required().min(10),
   orderFormCountry: yup.string().required().min(2),
+	orderDateOfBirth: yup
+    .mixed()
+    .test('required', 'Введите дату рождения', value => value && value !== '')
+    .test('valid-date', 'Введите корректную дату рождения', value => {
+      if (!value) return false;
+      const date = new Date(value);
+      return !isNaN(date.getTime());
+    })
+    .test('is-adult', 'Вы должны быть старше 18 лет', value => {
+      if (!value) return false;
+      return validateAge(value);
+    })
+    .test('not-future', 'Дата рождения не может быть в будущем', value => {
+      if (!value) return false;
+      return new Date(value) <= new Date();
+    }),
+	cardNumber: yup
+    .string()
+    .required('Номер карты обязателен')
+    .matches(/^\d{16}$/, 'Номер карты должен содержать ровно 16 цифр'),
+  cardExpiry: yup
+    .string()
+    .required('Срок действия карты обязателен')
+    .test('valid-expiry', 'Введите срок действия в формате MM/YY', validateCardExpiry),
+  cardCVV: yup
+    .string()
+    .required('CVV код обязателен')
+    .matches(/^\d{3}$/, 'CVV должен содержать ровно 3 цифры'),
+  agreeToTerms: yup
+    .boolean()
+    .oneOf([true], 'Необходимо согласие на обработку данных')
+    .required('Необходимо согласие на обработку данных'),
 });
 
 async function onSubmit(values) {
@@ -41,7 +110,7 @@ async function onSubmit(values) {
     
     setTimeout(() => {
       router.push('/'); 
-    }, 2000);
+    }, 1500);
 
   } catch (error) {
     console.error('Ошибка:', error);
@@ -51,6 +120,21 @@ async function onSubmit(values) {
   }
 }
 
+const formatCardNumber = (value) => {
+  return value.replace(/\D/g, '').slice(0, 16);
+};
+
+const formatCardExpiry = (value) => {
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length >= 3) {
+    return cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
+  }
+  return cleaned;
+};
+
+const formatCVV = (value) => {
+  return value.replace(/\D/g, '').slice(0, 3);
+};
 </script>
 
 <template>
@@ -126,6 +210,63 @@ async function onSubmit(values) {
         <ErrorMessage name="orderFormHobby" as="p"/>
       </label>
     </div>
+		<div class="order_form_element">
+      <label>Введите дату рождения
+        <Field name="orderDateOfBirth" v-model="orderDateOfBirth" v-slot="{ field, meta }"> 
+          <input type="date" v-bind="field" :class="meta.touched && meta.errors.length ? 'red' : ''"/>
+        </Field>
+        <ErrorMessage name="orderDateOfBirth" as="p"/>
+      </label>
+    </div>
+		<div class="order_form_element">
+      <label>Номер карты
+        <Field name="cardNumber" v-model="cardNumber" v-slot="{ field, meta }">
+          <input 
+            v-bind="field" 
+            :class="meta.touched && meta.errors.length ? 'red' : ''"
+            placeholder="1234 5678 9012 3456"
+            @input="(e) => { field.onInput(e); cardNumber = formatCardNumber(e.target.value); }"
+          />
+        </Field>
+        <ErrorMessage name="cardNumber" as="p"/>
+      </label>
+    </div>
+    <div class="order_form_element card-details">
+      <div class="card-detail">
+        <label>Срок действия (MM/YY)
+          <Field name="cardExpiry" v-model="cardExpiry" v-slot="{ field, meta }">
+            <input 
+              v-bind="field" 
+              :class="meta.touched && meta.errors.length ? 'red' : ''"
+              placeholder="MM/YY"
+              @input="(e) => { field.onInput(e); cardExpiry = formatCardExpiry(e.target.value); }"
+            />
+          </Field>
+          <ErrorMessage name="cardExpiry" as="p"/>
+        </label>
+      </div>
+      <div class="card-detail">
+        <label>CVV
+          <Field name="cardCVV" v-model="cardCVV" v-slot="{ field, meta }">
+            <input 
+              v-bind="field" 
+              :class="meta.touched && meta.errors.length ? 'red' : ''"
+              placeholder="123"
+              type="password"
+              @input="(e) => { field.onInput(e); cardCVV = formatCVV(e.target.value); }"
+            />
+          </Field>
+          <ErrorMessage name="cardCVV" as="p"/>
+        </label>
+      </div>
+    </div>
+		<div class="order_form_element">
+			<label class="checkbox-label">
+				<Field type="checkbox" name="agreeToTerms" v-model="agreeToTerms" value="true" />
+				<span>Я согласен на обработку персональных данных</span>
+			</label>
+			<ErrorMessage name="agreeToTerms" as="p"/>
+		</div>
     <button type="submit" :disabled="isLoading">
       {{ isLoading ? 'Отправка...' : 'Отправить' }}
     </button>
