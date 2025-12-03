@@ -1,7 +1,10 @@
 <script setup>
-import { useCart } from '../composables/useCart'
+import { storeToRefs } from 'pinia'
+import { useCartStore } from '../stores/cartStore.js'
 
-const { cartItems, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice } = useCart()
+const cartStore = useCartStore()
+const { removeFromCart, updateQuantity, clearCart, totalItems, totalPrice } = cartStore
+const { cartItems } = storeToRefs(cartStore)
 
 const incrementQuantity = (item) => {
   updateQuantity(item.id, item.quantity + 1)

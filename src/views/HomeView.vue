@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import Product from '../components/Product.vue'
-import { useProducts } from '../composables/useProducts'
+import { useProductStore } from '../stores/productStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   filters: {
@@ -10,7 +11,9 @@ const props = defineProps({
   }
 })
 
-const { products, loading, error, fetchProducts } = useProducts()
+const productStore = useProductStore()
+const { loading, error, fetchProducts } = productStore
+const { products } = storeToRefs()
 
 const filteredProducts = computed(() => {
   if (!products.value.length) return []

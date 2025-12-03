@@ -1,16 +1,21 @@
 <script setup>
-import { ref } from 'vue'
-import { Form, Field, ErrorMessage } from 'vee-validate'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
+import { Form, Field, ErrorMessage } from 'vee-validate'
+
 import * as yup from 'yup'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-const authLogin = ref('')
-const authPassword = ref('')
 const showSuccessMessage = ref(false)
 const isLoading = ref(false)
 const authError = ref('')
+
+onMounted(() => {
+  authStore.checkAuth()
+})
 
 const schema = yup.object({
   authLogin: yup.string().required('Логин обязателен').min(3, 'Логин должен быть не менее 3 символов'),
@@ -28,8 +33,7 @@ async function onAuth(values, { resetForm }) {
     if (values.authLogin && values.authPassword) {
       console.log('Успешная авторизация')
       
-      localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('userLogin', values.authLogin)
+			authStore.login(values.authLogin)
       
       showSuccessMessage.value = true
       resetForm()
@@ -49,12 +53,20 @@ async function onAuth(values, { resetForm }) {
     isLoading.value = false
   }
 }
+
+function handleLogout() {
+  authStore.logout()
+}
 </script>
 
 <template>
   <div class="auth-container">
     <h2>Авторизация</h2>
-    
+
+		<div v-if="authStore.isAuthenticated">
+      Вы уже авторизованы как: {{ authStore.userLogin }}
+    </div>
+		
     <div v-if="showSuccessMessage" class="success-message">
       ✅ Вы успешно авторизовались! Перенаправляем...
     </div>
@@ -63,7 +75,7 @@ async function onAuth(values, { resetForm }) {
       ❌ {{ authError }}
     </div>
     
-    <Form novalidate @submit="onAuth" class="auth-form" :validation-schema="schema">
+    <Form v-if="!authStore.isAuthenticated" novalidate @submit="onAuth" class="auth-form" :validation-schema="schema">
       <div class="form-group">
         <label>Логин</label>
         <Field type="text" name="authLogin" v-model="authLogin" v-slot="{ field, meta }">
@@ -85,7 +97,7 @@ async function onAuth(values, { resetForm }) {
       </button>
     </Form>
     
-    <div class="demo-info">
+    <div class="demo-info" v-if="!authStore.isAuthenticated">
       <p><strong>Демо-доступ:</strong> любой логин и пароль</p>
     </div>
   </div>

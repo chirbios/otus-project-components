@@ -1,10 +1,10 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { useCart } from '../composables/useCart'
+import { useCartStore } from '../stores/cartStore'
 
 const props = defineProps(['title', 'id', 'price', 'description', 'category', 'image', 'rating'])
 const router = useRouter()
-const { addToCart } = useCart()
+const { addToCart } = useCartStore()
 
 const goToProduct = () => {
   router.push(`/product/${props.id}`)
@@ -21,8 +21,6 @@ const handleAddToCart = (event) => {
     category: props.category,
     rating: props.rating
   })
-
-  addToCart(product)
 }
 </script>
 
@@ -53,7 +51,7 @@ li > img {
   width: 160px;
   height: 160px;
   border-radius: 16px;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .element {

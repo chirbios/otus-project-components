@@ -1,7 +1,8 @@
+import { defineStore } from "pinia"
 import { ref } from 'vue'
 import api from '../services/api'
 
-export function useProducts() {
+export const useProductStore = defineStore('product', () => {
   const products = ref([])
   const loading = ref(false)
   const error = ref(null)
@@ -28,4 +29,4 @@ export function useProducts() {
     error,
     fetchProducts
   }
-}
+})

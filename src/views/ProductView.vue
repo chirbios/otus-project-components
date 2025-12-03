@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useCartStore } from '../stores/cartStore'
 import api from '../services/api'
 
 const route = useRoute()
+const { addToCart } = useCartStore()
 const product = ref(null)
 const loading = ref(false)
 const error = ref(null)
@@ -21,6 +23,19 @@ const fetchProduct = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleAddToCart = (event) => {
+  event.stopPropagation()
+  addToCart({
+    id: product.value.id,
+    title: product.value.title,
+    price: product.value.price,
+    description: product.value.description,
+    image: product.value.image,
+    category: product.value.category,
+    rating: product.value.rating
+  })
 }
 
 onMounted(() => {
@@ -56,7 +71,7 @@ onMounted(() => {
             </div>
           </div>
           
-          <button class="buy-btn">Добавить в корзину</button>
+          <button class="buy-btn" @click="handleAddToCart">Добавить в корзину</button>
         </div>
       </div>
       
