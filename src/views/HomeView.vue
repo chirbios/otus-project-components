@@ -12,8 +12,8 @@ const props = defineProps({
 })
 
 const productStore = useProductStore()
-const { fetchProducts } = productStore
-const { loading, error, products } = storeToRefs(productStore)
+const { loading, error, fetchProducts } = productStore
+const { products } = storeToRefs()
 
 const filteredProducts = computed(() => {
   if (!products.value.length) return []
