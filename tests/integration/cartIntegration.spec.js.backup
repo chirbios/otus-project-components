@@ -1,0 +1,140 @@
+// tests/integration/cartIntegration.spec.js
+import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/vue'
+import userEvent from '@testing-library/user-event'
+import { createPinia, setActivePinia } from 'pinia'
+import CartView from '@/components/CartView.vue'
+import ProductList from '@/components/ProductList.vue'
+import { useCartStore } from '@/stores/cartStore.js'
+
+describe('Cart Integration Tests', () => {
+  let pinia
+  let cartStore
+  let user
+  
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    cartStore = useCartStore()
+    user = userEvent.setup()
+    
+    cartStore.clearCart()
+  })
+  
+  const mockProducts = [
+    { id: 1, title: 'Product 1', price: 100, image: '' },
+    { id: 2, title: 'Product 2', price: 200, image: '' }
+  ]
+  
+  // Мок компонента ProductList для интеграционного теста
+  const ProductListMock = {
+    template: `
+      <div>
+        <div v-for="product in products" :key="product.id" class="product">
+          <h3>{{ product.title }}</h3>
+          <button @click="addToCart(product)">Add to Cart</button>
+        </div>
+      </div>
+    `,
+    props: ['products'],
+    methods: {
+      addToCart(product) {
+        this.$cart.addToCart(product)
+      }
+    }
+  }
+  
+  it('adds product from ProductList to CartView', async () => {
+    // Рендерим ProductList
+    render(ProductListMock, {
+      global: {
+        plugins: [pinia],
+        provide: {
+          $cart: cartStore
+        }
+      },
+      props: {
+        products: mockProducts
+      }
+    })
+    
+    // Рендерим CartView
+    render(CartView, {
+      global: {
+        plugins: [pinia],
+        stubs: ['RouterLink']
+      }
+    })
+    
+    // Добавляем товар через ProductList
+    const addButtons = screen.getAllByRole('button', { name: 'Add to Cart' })
+    await user.click(addButtons[0])
+    
+    // Проверяем, что товар появился в CartView
+    expect(screen.getByText('Product 1')).toBeInTheDocument()
+    expect(screen.getByText('100$ за шт.')).toBeInTheDocument()
+  })
+  
+  it('maintains cart state between component interactions', async () => {
+    // Тест 1: Добавляем товар
+    cartStore.addToCart(mockProducts[0])
+    
+    // Рендерим CartView
+    const { unmount } = render(CartView, {
+      global: {
+        plugins: [pinia],
+        stubs: ['RouterLink']
+      }
+    })
+    
+    expect(screen.getByText('Product 1')).toBeInTheDocument()
+    
+    // Размонтируем компонент
+    unmount()
+    
+    // Тест 2: Снова рендерим CartView - состояние должно сохраниться
+    render(CartView, {
+      global: {
+        plugins: [pinia],
+        stubs: ['RouterLink']
+      }
+    })
+    
+    // Store сохраняет состояние между монтированиями
+    expect(screen.getByText('Product 1')).toBeInTheDocument()
+    expect(cartStore.cartItems).toHaveLength(1)
+  })
+  
+  it('updates cart count in multiple components simultaneously', async () => {
+    // Компонент для отображения счетчика корзины
+    const CartCounterMock = {
+      template: '<div>Cart: {{ $cart.cartCount }} items</div>',
+      inject: ['$cart']
+    }
+    
+    // Рендерим CartCounter
+    render(CartCounterMock, {
+      global: {
+        plugins: [pinia],
+        provide: {
+          $cart: cartStore
+        }
+      }
+    })
+    
+    // Рендерим CartView
+    render(CartView, {
+      global: {
+        plugins: [pinia],
+        stubs: ['RouterLink']
+      }
+    })
+    
+    // Добавляем товар
+    cartStore.addToCart(mockProducts[0])
+    
+    // Оба компонента должны обновиться
+    expect(screen.getByText('Cart: 1 items')).toBeInTheDocument()
+    expect(screen.getByText('Товаров: 1')).toBeInTheDocument()
+  })
+})

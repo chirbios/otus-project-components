@@ -1,0 +1,29 @@
+// tests/setup.js
+import '@testing-library/jest-dom'
+import { config } from '@vue/test-utils'
+
+// Отключаем предупреждения о переходе на следующую версию Vue
+config.global.config.warnHandler = () => {}
+
+// Глобальные заглушки
+config.global.stubs = {
+  'RouterLink': {
+    template: '<a><slot /></a>',
+    props: ['to']
+  },
+  'FontAwesomeIcon': true
+}
+
+// Глобальные моки
+config.global.mocks = {
+  $t: (key) => key, // для i18n
+  $route: {
+    path: '/',
+    params: {}
+  },
+  $router: {
+    push: () => {},
+    replace: () => {},
+    go: () => {}
+  }
+}
